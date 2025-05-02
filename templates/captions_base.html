@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TubeExplainer - Captions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/captions_styles.css') }}">
+</head>
+<body class="dark-mode flex">
+    <nav class="navbar fixed top-0 left-0 w-full p-4 flex justify-between items-center z-10">
+        <a href="/" class="text-xl font-bold text-[#c0c0c0] hover:text-[#ebebeb] transition">TubeExplainer</a>
+        <button id="mode-toggle" class="text-[#c0c0c0] hover:text-[#ebebeb] relative tooltip">
+            <i class="fas fa-sun"></i>
+            <span class="tooltip-text">Toggle Light Mode</span>
+        </button>
+    </nav>
+    <div class="flex-1 pr-64 pt-20 max-w-4xl mx-auto p-4">
+        <h1 id="video-title" class="text-xl font-semibold text-[#c0c0c0] mb-2 relative tooltip">
+            Captions for {{ video_title | replace('_', ' ') | truncate(30, True, '...') }}
+            <span class="tooltip-text">{{ video_title | replace('_', ' ') }}</span>
+        </h1>
+        <h2 id="lang-header" class="text-lg text-[#c0c0c0] mb-4">Available Languages</h2>
+        <div id="lang-buttons" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4">
+            {% for lang in languages %}
+                <button class="lang-btn bg-[#e8eddf] text-[#333533] p-2 rounded-lg hover:bg-[#cfdbd5] transition"
+                        data-base-url="{{ lang.base_url }}"
+                        data-lang-code="{{ lang.code }}"
+                        data-is-auto="{{ lang.is_auto }}"
+                        data-video-title="{{ video_title }}">
+                    {{ lang.name }} {% if lang.is_auto %}(auto-generated){% endif %}
+                </button>
+            {% endfor %}
+        </div>
+        <div id="loading" class="flex justify-center items-center hidden">
+            <div class="spinner"></div>
+        </div>
+        <div id="captions" class="caption-container bg-[#242423] p-4 rounded-lg shadow-lg hidden">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-lg font-semibold text-[#c0c0c0]">Captions</h3>
+                <div class="flex gap-0">
+                    <button id="save-to-library-btn" class="text-[#c0c0c0] hover:text-[#ebebeb] relative tooltip">
+                        <i class="fas fa-save p-2 rounded-full border border-[#ebebeb] hover:bg-[#4a5568] transition"></i>
+                        <span class="tooltip-text">Save to Library</span>
+                    </button>
+                    <button id="copy-btn" class="text-[#c0c0c0] hover:text-[#ebebeb] relative tooltip ml-2">
+                        <i class="fas fa-copy p-2 rounded-full border border-[#ebebeb] hover:bg-[#4a5568] transition"></i>
+                        <span class="tooltip-text">Copy to Clipboard</span>
+                    </button>
+                </div>
+            </div>
+            <div id="caption-text" class="text-[#c0c0c0]"></div>
+            <div class="flex justify-center items-center gap-2 mt-2">
+                <button id="prev-page" class="text-[#c0c0c0] hover:text-[#ebebeb] relative tooltip disabled:opacity-50" disabled>
+                    <i class="fas fa-arrow-left p-2 rounded-full border border-[#ebebeb] hover:bg-[#4a5568] transition"></i>
+                    <span class="tooltip-text">Previous</span>
+                </button>
+                <div id="page-numbers" class="flex gap-2"></div>
+                <button id="next-page" class="text-[#c0c0c0] hover:text-[#ebebeb] relative tooltip">
+                    <i class="fas fa-arrow-right p-2 rounded-full border border-[#ebebeb] hover:bg-[#4a5568] transition"></i>
+                    <span class="tooltip-text">Next</span>
+                </button>
+            </div>
+            <div id="page-info" class="text-[#c0c0c0] text-center mt-1"></div>
+        </div>
+        <div id="error" class="text-red-400 mt-2 hidden"></div>
+        <div id="toast" class="toast"></div>
+    </div>
+    <div class="sidebar fixed top-16 right-0">
+        <h3 class="text-lg font-semibold text-[#c0c0c0] mb-2">Library</h3>
+        <div id="folder-structure" class="folder-structure text-[#c0c0c0]"></div>
+        <button id="create-folder-btn" class="create-folder-btn">
+            <i class="fas fa-folder-plus mr-2"></i> Create Folder
+        </button>
+    </div>
+    <div id="save-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">×</span>
+            <h2 class="text-xl font-semibold mb-4">Save to Library</h2>
+            <p class="mb-4">Where would you like to save this text file?</p>
+            <div id="modal-folder-structure" class="max-h-60 overflow-y-auto mb-4"></div>
+            <button id="confirm-save-btn" class="bg-[#3a6ea5] text-[#c0c0c0] p-2 rounded-lg hover:bg-[#004e98] transition w-full">Save</button>
+        </div>
+    </div>
+    <div id="editor-modal" class="modal">
+        <div class="modal-content editor-modal-content">
+            <span class="close">×</span>
+            <h2 id="editor-title" class="text-xl font-semibold mb-4"></h2>
+            <textarea id="editor-content" readonly></textarea>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/captions_scripts.js') }}"></script>
+</body>
+</html>
