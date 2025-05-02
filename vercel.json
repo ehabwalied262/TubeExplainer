@@ -7,9 +7,13 @@
     }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "app.py"
-    }
-  ]
+  {
+    "src": "/",
+    "dest": "/app.py"
+  },
+  {
+    "src": "/get_captions",
+    "dest": "/app.py"
+  }
+]
 }
